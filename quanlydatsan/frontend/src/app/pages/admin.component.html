@@ -1,0 +1,231 @@
+﻿<main class="admin-page">
+  <aside class="admin-sidebar"><a class="brand" routerLink="/"><span class="brand-mark">SN</span><span>SÂN NHÀ<span class="brand-dot">.</span></span></a><div class="admin-side-label">WORKSPACE</div><button [class.side-active]="tab() === 'dashboard'" (click)="tab.set('dashboard')"><span>◫</span> Tổng quan</button><button class="pending-nav" [class.side-active]="tab() === 'pending'" [class.pending-nav-alert]="pendingBookings().length > 0" (click)="tab.set('pending')"><span>◷</span> Chờ duyệt <i>{{ pendingBookings().length }}</i></button><button [class.side-active]="tab() === 'bookings'" (click)="tab.set('bookings')"><span>▤</span> Lịch sử đơn <i>{{ bookings().length - pendingBookings().length }}</i></button><button [class.side-active]="tab() === 'pitches'" (click)="tab.set('pitches')"><span>▦</span> Quản lý sân</button><button [class.side-active]="tab() === 'accounts'" (click)="tab.set('accounts')"><span>♙</span> Tài khoản user</button><button [class.side-active]="tab() === 'vouchers'" (click)="tab.set('vouchers')"><span>✦</span> Voucher</button><div class="admin-sidebar-bottom"><span class="admin-avatar">AD</span><span><b>Quản trị viên</b><small>Admin workspace</small></span><a routerLink="/" aria-label="Về trang chủ">↗</a></div></aside>
+  <section class="admin-content"><header class="admin-topbar"><div><span class="admin-breadcrumb">WORKSPACE <b>/</b> {{ tab() === 'pitches' ? 'SÂN BÓNG' : tab() === 'bookings' ? 'LỊCH SỬ ĐƠN' : tab() === 'pending' ? 'CHỜ DUYỆT' : tab() === 'dashboard' ? 'THỐNG KÊ' : tab() === 'accounts' ? 'TÀI KHOẢN USER' : 'VOUCHER' }}</span><h1>{{ tab() === 'pitches' ? 'Quản lý sân' : tab() === 'bookings' ? 'Lịch sử đơn đặt' : tab() === 'pending' ? 'Đơn đặt chờ duyệt' : tab() === 'dashboard' ? 'Dashboard doanh thu' : tab() === 'accounts' ? 'Quản lý tài khoản user' : 'Quản lý voucher' }}</h1></div><span class="admin-live"><i></i> HỆ THỐNG ĐANG HOẠT ĐỘNG</span></header>
+    @if (error()) { <div class="notice notice-error">{{ error() }} <button (click)="error.set('')">Đóng</button></div> }
+    @if (pendingBookings().length) {
+      <button class="pending-alert-banner" (click)="tab.set('pending')">
+        <span class="pending-alert-icon">!</span>
+        <span><strong>{{ pendingBookings().length }} đơn đặt sân đang chờ duyệt</strong><small>Đơn mới sẽ tự cập nhật tại đây. Nhấn để xem và xử lý.</small></span>
+        <b>Xem ngay ↗</b>
+      </button>
+    }
+    <div class="admin-tabs"><button [class.admin-tab-active]="tab() === 'dashboard'" (click)="tab.set('dashboard')">Tổng quan</button><button class="pending-tab" [class.admin-tab-active]="tab() === 'pending'" [class.pending-tab-alert]="pendingBookings().length > 0" (click)="tab.set('pending')">Chờ duyệt <span>{{ pendingBookings().length }}</span></button><button [class.admin-tab-active]="tab() === 'bookings'" (click)="tab.set('bookings')">Lịch sử đơn <span>{{ bookings().length - pendingBookings().length }}</span></button><button [class.admin-tab-active]="tab() === 'pitches'" (click)="tab.set('pitches')">Quản lý sân <span>{{ pitches().length }}</span></button><button [class.admin-tab-active]="tab() === 'accounts'" (click)="tab.set('accounts')">Tài khoản <span>{{ accounts().length }}</span></button><button [class.admin-tab-active]="tab() === 'vouchers'" (click)="tab.set('vouchers')">Voucher</button></div>
+    @if (tab() === 'pitches') {
+      <div class="admin-toolbar"><div><h2>Danh sách sân</h2><p>Quản lý thông tin và tình trạng các sân đang kinh doanh.</p></div><button class="button button-dark" (click)="modalOpen.set(true)"><span>＋</span> Thêm sân mới</button></div>
+      <div class="admin-table-wrap"><table><thead><tr><th>TÊN SÂN</th><th>LOẠI SÂN</th><th>VỊ TRÍ</th><th>GIÁ / GIỜ</th><th>TRẠNG THÁI</th><th></th></tr></thead><tbody>
+        @for (pitch of pitches(); track pitch._id) { <tr><td><div class="table-pitch"><span class="table-pitch-icon">SN</span><b>{{ pitch.name }}</b></div></td><td>{{ pitch.type }}</td><td>{{ pitch.location || '—' }}</td><td class="table-price">{{ pitch.pricePerHour | currency:'VND':'symbol':'1.0-0':'vi' }}</td><td><span class="status-pill" [class.status-inactive]="pitch.status !== 'active'"><i></i>{{ pitch.status === 'active' ? 'Đang mở' : 'Tạm ngưng' }}</span></td><td><div class="row-actions"><button class="approve-action" (click)="editPitch(pitch)">Sửa</button>@if (pitch.status === 'active') { <button class="cancel-action" (click)="deactivatePitch(pitch)">Ngừng</button> } @else { <button class="approve-action" (click)="activatePitch(pitch)">Mở lại</button> }</div></td></tr> }
+        @empty { <tr><td colspan="6" class="table-empty">Chưa có sân nào. Thêm sân đầu tiên để bắt đầu.</td></tr> }
+      </tbody></table></div>
+    } @else if (tab() === 'accounts') {
+      <div class="admin-toolbar"><div><h2>Danh sách tài khoản</h2><p>Tìm kiếm người dùng và quản lý quyền truy cập hệ thống.</p></div><div class="row-actions"><span class="status-pill"><i></i>{{ filteredAccounts().length }} / {{ accounts().length }} tài khoản</span><button class="button button-quiet" [disabled]="accountsLoading()" (click)="loadAccounts()">{{ accountsLoading() ? 'Đang tải...' : 'Làm mới' }}</button></div></div>
+      <section class="booking-filter-bar" aria-label="Tìm tài khoản">
+        <label class="field-label booking-search-field"><span>Tìm theo tên, email hoặc số điện thoại</span><input type="search" [ngModel]="accountSearch()" (ngModelChange)="accountSearch.set($event)" placeholder="Nhập thông tin tài khoản..." /></label>
+      </section>
+      <div class="admin-table-wrap"><table><thead><tr><th>TÊN NGƯỜI DÙNG</th><th>EMAIL</th><th>SỐ ĐIỆN THOẠI</th><th>VAI TRÒ</th><th>NGÀY TẠO</th><th></th></tr></thead><tbody>
+        @for (account of filteredAccounts(); track account.id) {
+          <tr>
+            <td><div class="table-pitch"><span class="table-pitch-icon">{{ account.name.slice(0, 1).toUpperCase() }}</span><b>{{ account.name }}</b></div></td>
+            <td>{{ account.email }}</td>
+            <td>{{ account.phone || '—' }}</td>
+            <td><span class="status-pill" [class.status-inactive]="account.role !== 'admin'"><i></i>{{ account.role === 'admin' ? 'Quản trị viên' : 'Người dùng' }}</span></td>
+            <td>{{ account.createdAt | date:'dd/MM/yyyy' }}</td>
+            <td><div class="row-actions">
+              @if (account.id === auth.user()?.id) {
+                <span class="account-current-user">Tài khoản của bạn</span>
+              } @else {
+                <button [class.cancel-action]="account.role === 'admin'" [class.approve-action]="account.role !== 'admin'" [disabled]="accountSavingId() !== null" (click)="changeAccountRole(account)">
+                  @if (accountSavingId() === account.id) { Đang cập nhật... } @else { {{ account.role === 'admin' ? 'Hạ quyền' : 'Cấp quyền admin' }} }
+                </button>
+              }
+            </div></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="6" class="table-empty">{{ accountsLoading() ? 'Đang tải danh sách tài khoản...' : accountSearch() ? 'Không tìm thấy tài khoản phù hợp.' : 'Chưa có tài khoản nào.' }}</td></tr>
+        }
+      </tbody></table></div>
+    } @else if (tab() === 'pending') {
+      <div class="admin-toolbar"><div><h2>Đơn cần xử lý</h2><p>Đơn đặt mới được làm mới tự động mỗi 15 giây.</p></div><span class="pending-count-pill">{{ pendingBookings().length }} đang chờ</span></div>
+      <div class="pending-booking-list">
+        @for (booking of pendingBookings(); track booking._id) {
+          <article class="pending-booking-card">
+            <div class="pending-booking-main">
+              <span class="pending-booking-status"><i></i> CHỜ DUYỆT</span>
+              <h3>{{ pitchName(booking) }} · {{ pitchType(booking) }}</h3>
+              <p><strong>{{ customerName(booking) }}</strong> · {{ customerPhone(booking) }} · {{ booking.bookingDate | date:'EEEE, dd/MM/yyyy':'':'vi' }}</p>
+              <p>Mã đơn: {{ bookingCode(booking) }}</p>
+              <p>{{ booking.startTime }} – {{ booking.endTime }} · Tổng {{ booking.totalPrice | currency:'VND':'symbol':'1.0-0':'vi' }}</p>
+              <p>Tiền cọc: <strong>{{ booking.depositAmount | currency:'VND':'symbol':'1.0-0':'vi' }}</strong> · {{ paymentLabel(booking.paymentStatus) }}</p>
+            </div>
+            <div class="pending-booking-actions">
+              <button type="button" class="button button-quiet" (click)="openBookingDetails(booking)">Chi tiết</button>
+              @if (booking.paymentStatus === 'payment_requested') {
+                <button class="button button-lime" (click)="setPaymentStatus(booking, 'paid')">Xác nhận cọc</button>
+              }
+              <button class="button button-dark" (click)="setStatus(booking, 'confirmed')">Duyệt đơn</button>
+              <button class="button button-quiet" (click)="setStatus(booking, 'cancelled')">Từ chối</button>
+            </div>
+          </article>
+        } @empty {
+          <div class="empty-state"><span class="empty-mark">✓</span><h3>Không có đơn chờ duyệt</h3><p>Đơn mới sẽ tự xuất hiện tại đây khi khách đặt sân.</p></div>
+        }
+      </div>
+    } @else if (tab() === 'bookings') {
+      <div class="admin-toolbar"><div><h2>Tất cả đơn đặt sân</h2><p>Tìm kiếm, lọc và xử lý trạng thái các đơn đặt sân.</p></div><span class="status-pill"><i></i>{{ filteredBookings().length }} / {{ bookings().length }} đơn</span></div>
+      <section class="booking-filter-bar" aria-label="Bộ lọc đơn đặt sân">
+        <label class="field-label booking-search-field"><span>Tìm mã đơn, tên khách hoặc số điện thoại</span><input type="search" [ngModel]="bookingSearch()" (ngModelChange)="bookingSearch.set($event)" placeholder="VD: SP-..., Nguyễn An, 09..." /></label>
+        <label class="field-label"><span>Trạng thái</span><select [ngModel]="bookingStatusFilter()" (ngModelChange)="bookingStatusFilter.set($event)"><option value="all">Tất cả</option><option value="pending">Chờ duyệt</option><option value="confirmed">Đã duyệt</option><option value="cancelled">Đã hủy</option></select></label>
+        <label class="field-label"><span>Loại sân</span><select [ngModel]="bookingPitchTypeFilter()" (ngModelChange)="bookingPitchTypeFilter.set($event)"><option value="all">Tất cả loại sân</option>@for (type of bookingPitchTypes(); track type) { <option [value]="type">{{ type }}</option> }</select></label>
+        <label class="field-label"><span>Từ ngày</span><input type="date" [ngModel]="bookingDateFrom()" (ngModelChange)="bookingDateFrom.set($event)" /></label>
+        <label class="field-label"><span>Đến ngày</span><input type="date" [ngModel]="bookingDateTo()" (ngModelChange)="bookingDateTo.set($event)" /></label>
+      </section>
+      <div class="admin-booking-table-wrap"><table class="admin-booking-table"><thead><tr><th>MÃ ĐƠN</th><th>KHÁCH HÀNG</th><th>SÂN BÓNG</th><th>NGÀY & GIỜ ĐÁ</th><th>TỔNG TIỀN / CỌC</th><th>TRẠNG THÁI</th><th>THAO TÁC</th></tr></thead><tbody>
+        @for (booking of filteredBookings(); track booking._id) {
+          <tr>
+            <td><strong class="booking-code">{{ bookingCode(booking) }}</strong></td>
+            <td><strong>{{ customerName(booking) }}</strong><small>{{ customerPhone(booking) }}</small></td>
+            <td><strong>{{ pitchName(booking) }}</strong><small>{{ pitchType(booking) }}</small></td>
+            <td><strong>{{ booking.bookingDate | date:'dd/MM/yyyy' }}</strong><small>{{ booking.startTime }} – {{ booking.endTime }}</small></td>
+            <td><strong>{{ booking.totalPrice | currency:'VND':'symbol':'1.0-0':'vi' }}</strong><small>Tiền cọc {{ booking.depositAmount | currency:'VND':'symbol':'1.0-0':'vi' }}</small></td>
+            <td><span class="status-pill" [class.status-pending]="booking.status === 'pending'" [class.status-confirmed]="booking.status === 'confirmed'" [class.status-inactive]="booking.status === 'cancelled'"><i></i>{{ statusLabel(booking.status) }}</span><small>{{ paymentLabel(booking.paymentStatus) }}</small></td>
+            <td><div class="booking-table-actions">
+              <button type="button" class="approve-action" (click)="openBookingDetails(booking)">Chi tiết</button>
+              @if (booking.status === 'pending') { <button type="button" class="approve-action" (click)="setStatus(booking, 'confirmed')">Duyệt</button><button type="button" class="cancel-action" (click)="setStatus(booking, 'cancelled')">Từ chối</button> }
+              @else if (booking.status === 'confirmed') { <button type="button" class="cancel-action" (click)="setStatus(booking, 'cancelled')">Hủy đơn</button><button type="button" class="approve-action" (click)="exportBookingInvoice(booking)">Xuất PDF</button> }
+              @else { <button type="button" class="approve-action" (click)="setStatus(booking, 'confirmed')">Khôi phục</button><button type="button" class="cancel-action" (click)="openBookingDetails(booking)">Xem lý do</button> }
+              @if (booking.status !== 'cancelled' && booking.paymentStatus === 'payment_requested') { <button type="button" class="approve-action" (click)="setPaymentStatus(booking, 'paid')">Xác nhận cọc</button> }
+            </div></td>
+          </tr>
+        } @empty { <tr><td colspan="7" class="table-empty">Không có đơn đặt sân khớp với bộ lọc.</td></tr> }
+      </tbody></table></div>
+    } @else if (tab() === 'dashboard') {
+      <div class="dashboard-grid">
+        <div class="metric-card"><span>Tiền cọc đã nhận</span><strong>{{ dashboardStats().totalRevenue | currency:'VND':'symbol':'1.0-0':'vi' }}</strong><small>Admin đã xác nhận</small></div>
+        <div class="metric-card"><span>Đơn chờ duyệt</span><strong>{{ dashboardStats().pendingBookings }}</strong><button class="approve-action" (click)="tab.set('pending')">Mở danh sách chờ duyệt</button></div>
+        <div class="metric-card"><span>Yêu cầu cọc chờ xác nhận</span><strong>{{ dashboardStats().pendingPayments }}</strong><button class="approve-action" (click)="tab.set('bookings')">Mở danh sách đơn</button></div>
+        <div class="metric-card"><span>Tỷ lệ lấp đầy</span><strong>{{ dashboardStats().utilization }}%</strong><small>7 ngày gần nhất</small></div>
+        <div class="metric-card"><span>Sân được đặt nhiều</span><strong>{{ dashboardStats().popularPitch.name }}</strong><small>{{ dashboardStats().popularPitch.count }} đơn xác nhận</small></div>
+        <div class="metric-card"><span>Khung giờ ưa thích</span><strong>{{ dashboardStats().favoriteSlots[0]?.hour || '18:00' }}</strong><small>{{ dashboardStats().favoriteSlots[0]?.total || 0 }} lượt</small></div>
+      </div>
+      <section class="admin-email-status">
+        <div><strong>Thông báo email</strong><p>Email được gửi khi khách đặt sân, báo đã chuyển cọc hoặc admin cập nhật trạng thái.</p></div>
+        @if (adminStatus(); as status) {
+          <div class="email-status-list">
+            <span [class.email-status-off]="!status.customerEmailEnabled"><i></i> Email cho khách: {{ status.customerEmailEnabled ? 'Đã cấu hình' : 'Chưa cấu hình' }}</span>
+            <span [class.email-status-off]="!status.adminPaymentEmailEnabled"><i></i> Email báo cọc cho admin: {{ status.adminPaymentEmailEnabled ? 'Đã cấu hình' : 'Chưa cấu hình' }}</span>
+          </div>
+          @if (!status.customerEmailEnabled || !status.adminPaymentEmailEnabled) {
+            <small>Để bật email, thêm EMAIL_USER, EMAIL_PASS và ADMIN_EMAIL vào backend/.env rồi khởi động lại backend.</small>
+          }
+        } @else { <p>Đang kiểm tra cấu hình email...</p> }
+      </section>
+      <div class="dashboard-panels">
+        <section class="dashboard-panel"><h3>Tiền cọc đã xác nhận theo ngày</h3><div class="chart-bars">@for (item of dashboardStats().dailyRevenue; track item.label) { <div class="chart-column"><span>{{ item.value | currency:'VND':'symbol':'1.0-0':'vi' }}</span><i [style.height.%]="((item.value / dashboardStats().highestRevenue) * 100) || 10"></i><b>{{ item.label }}</b></div> }</div></section>
+        <section class="dashboard-panel"><h3>Khung giờ ưu thích</h3><div class="slot-cloud">@for (slot of dashboardStats().favoriteSlots.slice(0, 5); track slot.hour) { <span class="slot-pill">{{ slot.hour }} · {{ slot.total }}</span> }</div></section>
+      </div>
+    } @else {
+      <div class="admin-voucher-panel">
+        <form class="voucher-form" [formGroup]="voucherForm" (ngSubmit)="saveVoucher()">
+          <h3>Tạo mã voucher</h3>
+          <div class="voucher-form-grid">
+            <label class="field-label"><span>Mã</span><input formControlName="code" placeholder="VIP10" /></label>
+            <label class="field-label"><span>Loại</span><select formControlName="type"><option value="percentage">Phần trăm</option><option value="fixed">Số tiền</option><option value="offpeak">Khung giờ vắng khách</option></select></label>
+            <label class="field-label"><span>Giá trị</span><input type="number" min="1" formControlName="value" /></label>
+          </div>
+          <label class="field-label"><span>Mô tả</span><input formControlName="description" placeholder="Giảm 10% cho khách quen" /></label>
+          <label class="field-label"><span>Số lượt sử dụng tối đa</span><input type="number" min="1" formControlName="maxUses" placeholder="Để trống nếu không giới hạn" /></label>
+          <small class="voucher-usage-hint">Mỗi đơn đặt sân tạo thành công với mã này sẽ dùng 1 lượt.</small>
+          <label class="checkbox-line"><input type="checkbox" formControlName="active" /> Kích hoạt ngay</label>
+          <button type="submit" class="button button-dark">Lưu voucher</button>
+        </form>
+        <div class="voucher-list-wrap">
+          <h3>Danh sách voucher</h3>
+          @for (voucher of vouchers(); track voucher._id) {
+            <div class="voucher-item">
+              <div><strong>{{ voucher.code }}</strong><small>{{ voucher.description }}</small>
+                @if (voucher.maxUses === null) { <small>Không giới hạn lượt dùng</small> }
+                @else { <small>Đã dùng {{ voucher.usedCount }}/{{ voucher.maxUses }} lượt · Còn {{ voucherRemaining(voucher) }}</small> }
+              </div>
+              <span>{{ voucher.type === 'fixed' ? (voucher.value | currency:'VND':'symbol':'1.0-0':'vi') : voucher.value + '%' }}</span>
+              <button class="approve-action" (click)="toggleVoucher(voucher)">{{ voucher.active ? 'Tắt' : 'Bật' }}</button>
+            </div>
+          } @empty { <p class="table-empty">Chưa có voucher.</p> }
+        </div>
+        <form class="promotion-form" [formGroup]="promotionForm" (ngSubmit)="savePromotion()">
+          <h3>Tạo chương trình khuyến mãi tự động</h3>
+          <p>Giảm giá tự động theo ngày thi đấu. Nếu khách nhập voucher cùng lúc, hệ thống chỉ áp dụng mức giảm cao hơn.</p>
+          <div class="promotion-form-grid">
+            <label class="field-label"><span>Tên chương trình</span><input formControlName="name" placeholder="Ưu đãi khai trương" /></label>
+            <label class="field-label"><span>Giảm giá (%)</span><input type="number" min="1" max="100" formControlName="value" /></label>
+            <label class="field-label"><span>Ngày bắt đầu</span><input type="date" formControlName="startDate" /></label>
+            <label class="field-label"><span>Ngày kết thúc</span><input type="date" formControlName="endDate" /></label>
+          </div>
+          <label class="checkbox-line"><input type="checkbox" formControlName="active" /> Kích hoạt ngay</label>
+          <button type="submit" class="button button-dark">Tạo chương trình</button>
+        </form>
+        <div class="promotion-list-wrap">
+          <h3>Chương trình khuyến mãi</h3>
+          @for (promotion of promotions(); track promotion._id) {
+            <div class="voucher-item">
+              <div><strong>{{ promotion.name }}</strong><small>{{ promotion.startDate | date:'dd/MM/yyyy' }} – {{ promotion.endDate | date:'dd/MM/yyyy' }}</small><small>{{ promotion.active ? 'Đang bật' : 'Đang tắt' }}</small></div>
+              <span>-{{ promotion.value }}%</span>
+              <button class="approve-action" (click)="togglePromotion(promotion)">{{ promotion.active ? 'Tắt' : 'Bật' }}</button>
+            </div>
+          } @empty { <p class="table-empty">Chưa có chương trình khuyến mãi.</p> }
+        </div>
+      </div>
+    }
+  </section>
+  @if (pendingNoticeOpen() && pendingBookings().length) {
+    <div class="pending-modal-backdrop" (click)="closePendingNotice()">
+      <section class="pending-modal" role="alertdialog" aria-modal="true" aria-labelledby="pending-modal-title" (click)="$event.stopPropagation()">
+        <header><span class="pending-alert-icon">!</span><button type="button" aria-label="Đóng thông báo" (click)="closePendingNotice()">×</button></header>
+        <span class="pending-booking-status"><i></i> CẦN XỬ LÝ</span>
+        <h2 id="pending-modal-title">Có {{ pendingBookings().length }} đơn đặt sân chờ duyệt</h2>
+        <p>Đơn mới vừa được gửi. Kiểm tra lịch và xác nhận để giữ chỗ cho khách.</p>
+        <div class="pending-modal-list">
+          @for (booking of pendingBookings(); track booking._id) {
+            <article>
+              <strong>{{ pitchName(booking) }}</strong>
+              <span>{{ customerName(booking) }} · {{ booking.bookingDate | date:'dd/MM/yyyy' }} · {{ booking.startTime }}–{{ booking.endTime }}</span>
+              <small>Tiền cọc {{ booking.depositAmount | currency:'VND':'symbol':'1.0-0':'vi' }} · {{ paymentLabel(booking.paymentStatus) }}</small>
+              <div class="pending-booking-actions">
+                @if (booking.paymentStatus === 'payment_requested') { <button class="button button-lime" (click)="setPaymentStatus(booking, 'paid')">Xác nhận cọc</button> }
+                <button class="button button-dark" (click)="setStatus(booking, 'confirmed')">Duyệt</button>
+                <button class="button button-quiet" (click)="setStatus(booking, 'cancelled')">Từ chối</button>
+              </div>
+            </article>
+          }
+        </div>
+        <button type="button" class="button button-dark pending-modal-open" (click)="tab.set('pending'); closePendingNotice()">Mở cửa sổ chờ duyệt</button>
+      </section>
+    </div>
+  }
+  @if (selectedBooking(); as booking) {
+    <div class="booking-dialog-backdrop" (click)="closeBookingDetails()">
+      <section class="booking-dialog" role="dialog" aria-modal="true" aria-labelledby="booking-details-title" (click)="$event.stopPropagation()">
+        <header><div><span class="eyebrow"><span class="eyebrow-line"></span> CHI TIẾT ĐƠN</span><h2 id="booking-details-title">{{ bookingCode(booking) }}</h2></div><button type="button" aria-label="Đóng" (click)="closeBookingDetails()">×</button></header>
+        <dl class="booking-detail-list">
+          <div><dt>Khách hàng</dt><dd>{{ customerName(booking) }}</dd></div><div><dt>Số điện thoại</dt><dd>{{ customerPhone(booking) }}</dd></div>
+          <div><dt>Sân bóng</dt><dd>{{ pitchName(booking) }} · {{ pitchType(booking) }}</dd></div><div><dt>Ngày thi đấu</dt><dd>{{ booking.bookingDate | date:'EEEE, dd/MM/yyyy':'':'vi' }}</dd></div>
+          <div><dt>Khung giờ</dt><dd>{{ booking.startTime }} – {{ booking.endTime }}</dd></div><div><dt>Trạng thái</dt><dd>{{ statusLabel(booking.status) }}</dd></div>
+          <div><dt>Tổng tiền</dt><dd>{{ booking.totalPrice | currency:'VND':'symbol':'1.0-0':'vi' }}</dd></div><div><dt>Tiền cọc</dt><dd>{{ booking.depositAmount | currency:'VND':'symbol':'1.0-0':'vi' }} · {{ paymentLabel(booking.paymentStatus) }}</dd></div>
+          @if (booking.cancellationReason) { <div class="booking-cancellation-note"><dt>Lý do hủy</dt><dd>{{ booking.cancellationReason }}</dd></div> }
+        </dl>
+        <footer><button type="button" class="button button-quiet" (click)="closeBookingDetails()">Đóng</button>@if (booking.status === 'confirmed') { <button type="button" class="button button-dark" (click)="exportBookingInvoice(booking)">Xuất PDF / Hóa đơn</button> }</footer>
+      </section>
+    </div>
+  }
+  @if (cancellationBooking(); as booking) {
+    <div class="booking-dialog-backdrop" (click)="closeCancellationDialog()">
+      <section class="booking-dialog cancellation-dialog" role="dialog" aria-modal="true" aria-labelledby="cancel-booking-title" (click)="$event.stopPropagation()">
+        <header><div><span class="eyebrow"><span class="eyebrow-line"></span> HỦY ĐƠN ĐẶT SÂN</span><h2 id="cancel-booking-title">{{ bookingCode(booking) }}</h2></div><button type="button" aria-label="Đóng" (click)="closeCancellationDialog()">×</button></header>
+        <p>Nhập lý do hủy để lưu vào lịch sử đơn và thông báo rõ trạng thái cho khách hàng.</p>
+        <label class="field-label">Lý do hủy<textarea rows="4" maxlength="500" [ngModel]="cancellationReason()" (ngModelChange)="setCancellationReason($event)" placeholder="Ví dụ: Sân cần bảo trì trong khung giờ này"></textarea></label>
+        <small class="character-count">{{ cancellationReason().length }}/500 ký tự</small>
+        @if (cancellationError()) { <div class="notice notice-error" role="alert">{{ cancellationError() }}</div> }
+        <footer><button type="button" class="button button-quiet" (click)="closeCancellationDialog()">Quay lại</button><button type="button" class="button button-dark" (click)="confirmCancellation()">Xác nhận hủy đơn</button></footer>
+      </section>
+    </div>
+  }
+  @if (modalOpen()) { <div class="modal-backdrop" (click)="closeModal()"><section class="pitch-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" (click)="$event.stopPropagation()"><header><div><div class="eyebrow"><span class="eyebrow-line"></span> DANH MỤC</div><h2 id="modal-title">{{ editingId() ? 'Chỉnh sửa sân' : 'Thêm sân mới' }}</h2></div><button class="modal-close" aria-label="Đóng" (click)="closeModal()">×</button></header><form [formGroup]="form" (ngSubmit)="savePitch()"><label class="field-label">Tên sân<input formControlName="name" placeholder="Sân vận động ..."></label><div class="form-row"><label class="field-label">Loại sân<select formControlName="type"><option>Sân 5</option><option>Sân 7</option><option>Sân 11</option></select></label><label class="field-label">Giá / giờ (VND)<input type="number" min="0" formControlName="pricePerHour"></label></div><label class="field-label">Địa chỉ<input formControlName="location" placeholder="Quận, thành phố"></label><label class="field-label">Tải ảnh từ thiết bị <span>JPG, PNG, WEBP hoặc GIF · tối đa 5 ảnh, 5 MB mỗi ảnh</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple (change)="onImagesSelected($event)"></label>@if (imagePreviews().length) { <div class="pitch-image-previews">@for (image of imagePreviews(); track image.url) { <figure><img [src]="image.url" [alt]="image.name"><figcaption>{{ image.name }}</figcaption></figure> }</div><button class="image-clear" type="button" (click)="clearSelectedImages()">Bỏ ảnh đã chọn</button> }<label class="field-label">URL hình ảnh bổ sung <span>(nếu có, mỗi URL một dòng)</span><textarea rows="2" formControlName="images" placeholder="https://..."></textarea></label><label class="field-label">Mô tả<textarea rows="3" formControlName="description" placeholder="Mặt cỏ, tiện ích, bãi đỗ xe..."></textarea></label><div class="modal-actions"><button class="button button-quiet" type="button" (click)="closeModal()">Để sau</button><button class="button button-dark" type="submit" [disabled]="saving()">{{ saving() ? 'Đang lưu...' : (editingId() ? 'Lưu thay đổi' : 'Thêm sân') }}</button></div></form></section></div> }
+</main>

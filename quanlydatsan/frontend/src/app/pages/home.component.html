@@ -1,0 +1,60 @@
+<main>
+  <section class="hero-band">
+    <div class="hero-copy">
+      <div class="eyebrow"><span class="eyebrow-line"></span> SÂN BÓNG QUANH BẠN</div>
+      <h1>Hẹn nhau<br>trên <em>sân cỏ.</em></h1>
+      <p>Tìm sân phù hợp, chọn giờ còn trống và xác nhận trận đấu chỉ trong vài phút.</p>
+      <a class="button button-lime" routerLink="/san-bong">Khám phá sân <span aria-hidden="true">↓</span></a>
+      <div class="hero-proof"><span class="proof-avatars"><b>H</b><b>M</b><b>A</b></span><span><strong>Trận đấu bắt đầu từ đây</strong><br>Đặt sân nhanh · Chơi hết mình</span></div>
+    </div>
+    <div class="hero-image" role="img" aria-label="Sân bóng xanh dưới ánh đèn chiều">
+      <div class="hero-image-caption"><span class="caption-pin">⌖</span><span><b>SÂN NHÀ, SÂN CỦA BẠN</b><small>Hà Nội · 32 sân đang mở</small></span><span class="caption-arrow">↗</span></div>
+      <div class="hero-score"><span>01</span><i></i><span>90</span><small>PHÚT CỦA BẠN</small></div>
+    </div>
+    <div class="hero-index">01 <span>/</span> 04</div>
+  </section>
+
+  <section class="section-shell pitch-section" id="san-bong">
+    <div class="section-heading">
+      <div><div class="eyebrow"><span class="eyebrow-line"></span> CHỌN SÂN, LÊN KÈO</div><h2>Sân đang được <em>yêu thích</em></h2></div>
+      <a class="text-link" routerLink="/san-bong">Tất cả sân <span aria-hidden="true">↗</span></a>
+    </div>
+    <div class="filter-row" aria-label="Lọc theo loại sân">
+      @for (type of types; track type) {
+        <button class="filter-chip" [class.filter-active]="selectedType() === type" (click)="selectedType.set(type)">{{ type }}</button>
+      }
+      <span class="result-count">{{ filteredPitches().length }} sân</span>
+    </div>
+    @if (apiUnavailable()) {
+      <div class="notice notice-warm"><strong>Chưa kết nối được máy chủ.</strong> Hãy chạy backend tại localhost:5000 và kiểm tra kết nối MongoDB.</div>
+    }
+    @if (loading()) {
+      <div class="empty-state"><span class="loader"></span><p>Đang tìm sân phù hợp...</p></div>
+    } @else if (filteredPitches().length) {
+      <div class="pitch-grid">
+        @for (pitch of filteredPitches(); track pitch._id; let index = $index) {
+          <article class="pitch-card" [style.animation-delay.ms]="index * 70">
+            <a class="pitch-photo" [routerLink]="['/san-bong', pitch._id]" [style.background-image]="'url(' + (pitch.images[0] || 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1000&q=85') + ')'">
+              <span class="pitch-type">{{ pitch.type }}</span><span class="photo-arrow">↗</span>
+            </a>
+            <div class="pitch-details">
+              <div class="pitch-location"><span>⌖</span> {{ pitch.location || 'Hà Nội' }}</div>
+              <h3><a [routerLink]="['/san-bong', pitch._id]">{{ pitch.name }}</a></h3>
+              <p class="pitch-description">{{ pitch.description || 'Mặt cỏ chất lượng, không gian thoáng và đầy đủ tiện ích.' }}</p>
+              <div class="pitch-card-bottom"><span><strong>{{ pitch.pricePerHour | currency:'VND':'symbol':'1.0-0':'vi' }}</strong> / giờ</span><a class="round-link" [routerLink]="['/san-bong', pitch._id]" [attr.aria-label]="'Xem ' + pitch.name">↗</a></div>
+            </div>
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="empty-state"><span class="empty-mark">SN</span><h3>{{ apiUnavailable() ? 'Sân sẽ sớm có mặt' : 'Chưa có sân phù hợp' }}</h3><p>{{ apiUnavailable() ? 'Kết nối backend để tải danh sách sân thật.' : 'Thử chọn loại sân khác hoặc quay lại sau nhé.' }}</p></div>
+    }
+  </section>
+
+  <section class="booking-strip" id="cach-dat">
+    <div class="strip-number">01—03</div>
+    <div class="strip-title"><div class="eyebrow eyebrow-light">ĐẶT SÂN THẬT NHANH</div><h2>Ba bước.<br><em>Một trận hay.</em></h2></div>
+    <div class="steps-list"><div><span>01</span><p><b>Chọn sân</b><small>Tìm sân hợp đội, gần chỗ bạn.</small></p></div><div><span>02</span><p><b>Chọn khung giờ</b><small>Chỉ những giờ còn trống mới được chọn.</small></p></div><div><span>03</span><p><b>Xác nhận trận</b><small>Nhận thông tin đặt sân qua email.</small></p></div></div>
+    <span class="strip-decoration" aria-hidden="true">✳</span>
+  </section>
+</main>

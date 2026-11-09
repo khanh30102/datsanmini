@@ -1,0 +1,52 @@
+<main class="detail-page">
+  @if (loading()) { <div class="empty-state"><span class="loader"></span><p>Đang tải thông tin sân...</p></div> }
+  @else if (pitch(); as item) {
+    <div class="detail-breadcrumb"><a routerLink="/">Sân Nhà</a><span>/</span><span>{{ item.name }}</span></div>
+    <section class="detail-hero" [style.background-image]="'url(' + (item.images[0] || 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1800&q=90') + ')'">
+      <span class="pitch-type">{{ item.type }}</span><div class="detail-hero-title"><span>{{ item.location || 'Hà Nội' }} · SÂN NHÀ</span><h1>{{ item.name }}</h1></div>
+    </section>
+    <div class="detail-layout">
+      <section class="detail-info"><div class="eyebrow"><span class="eyebrow-line"></span> GIỚI THIỆU</div><h2>Chọn sân.<br><em>Chốt trận.</em></h2><p>{{ item.description || 'Mặt cỏ chất lượng, không gian thoáng và đầy đủ tiện ích cho trận đấu của bạn.' }}</p><div class="detail-facts"><span><b>⌖</b>{{ item.location || 'Hà Nội' }}</span><span><b>◷</b>06:00 — 22:00</span><span><b>↗</b>{{ item.type }}</span></div><div class="detail-price"><strong>{{ item.pricePerHour | currency:'VND':'symbol':'1.0-0':'vi' }}</strong><span> / giờ</span></div>
+        <div class="pricing-note">
+          <span>Giá linh hoạt:</span>
+          <strong>{{ pricingMultiplier() | number:'1.0-2' }}x</strong>
+          <small>khung giờ vàng + cuối tuần</small>
+        </div>
+      </section>
+      <section class="booking-panel"><div class="booking-panel-head"><div><div class="eyebrow"><span class="eyebrow-line"></span> ĐẶT LỊCH</div><h2>Giữ chỗ cho trận đấu</h2></div><span class="panel-icon">↘</span></div>
+        <label class="field-label">Ngày thi đấu<input type="date" [ngModel]="date()" (ngModelChange)="onDateChange($event)" [min]="minimumDate"></label>
+        <label class="field-label">Thời lượng<select [ngModel]="duration()" (ngModelChange)="setDuration(+$event)"><option [ngValue]="1">1 giờ</option><option [ngValue]="2">2 giờ</option><option [ngValue]="3">3 giờ</option></select></label>
+        <div class="field-label slot-label">Khung giờ <span>Giờ đã có lịch sẽ bị khóa</span></div>
+        <div class="slot-grid">@for (slot of slots; track slot) { <button type="button" class="slot-button" [class.slot-selected]="selectedSlot() === slot" [class.slot-disabled]="isUnavailable(slot)" [disabled]="isUnavailable(slot)" (click)="selectSlot(slot)">{{ slot }}</button> }</div>
+        <div class="coupon-row">
+          <label class="field-label coupon-field">
+            <span>Mã khuyến mãi</span>
+            <input type="text" [ngModel]="voucherCode()" (ngModelChange)="setVoucherCode($event)" placeholder="NHANH10, OFFPEAK, ..." />
+          </label>
+          <button type="button" class="button button-small button-lime" (click)="applyVoucher()">Áp dụng</button>
+        </div>
+        @if (promotion(); as activePromotion) {
+          <div class="promotion-note"><strong>{{ activePromotion.name }}</strong><span>Giảm tự động {{ activePromotion.value }}% · {{ activePromotion.startDate | date:'dd/MM/yyyy' }}–{{ activePromotion.endDate | date:'dd/MM/yyyy' }}</span></div>
+        }
+        @if (voucherMessage()) { <div class="notice notice-success">{{ voucherMessage() }}</div> }
+        @if (error()) { <div class="notice notice-error">{{ error() }} @if (!auth.user()) { <a routerLink="/dang-nhap">Đăng nhập ngay</a> }</div> }
+        @if (notice()) { <div class="notice notice-success booking-toast" role="status">{{ notice() }}</div> }
+        <div class="booking-total"><span>Tổng tạm tính <small>· {{ duration() }} giờ</small></span><strong>{{ price() | currency:'VND':'symbol':'1.0-0':'vi' }}</strong></div>
+        <button class="button button-dark booking-submit" [disabled]="!selectedSlot() || busy()" (click)="confirmBooking()">{{ busy() ? 'Đang xác nhận...' : 'Xác nhận đặt sân' }} <span aria-hidden="true">↗</span></button>
+        <p class="booking-footnote">Đặt cọc mô phỏng 30% sau khi đặt sân; admin xác nhận thủ công.</p>
+      </section>
+    </div>
+    <section class="dashboard-panel pitch-reviews">
+      <div class="eyebrow"><span class="eyebrow-line"></span> ĐÁNH GIÁ KHÁCH HÀNG</div>
+      <h2>{{ reviewCount() ? reviewAverage() + ' / 5' : 'Chưa có đánh giá' }} <small>· {{ reviewCount() }} đánh giá</small></h2>
+      @for (review of reviews(); track review._id) {
+        <article class="pitch-review">
+          <strong>{{ reviewAuthor(review) }}</strong>
+          <span>{{ reviewStars(review.rating) }}</span>
+          @if (review.comment) { <p>{{ review.comment }}</p> }
+          <small>{{ review.createdAt | date:'dd/MM/yyyy' }}</small>
+        </article>
+      } @empty { <p>Đánh giá sẽ hiển thị sau khi khách hoàn thành trận đấu.</p> }
+    </section>
+  } @else { <div class="empty-state"><h2>Không tìm thấy sân</h2><a class="text-link" routerLink="/">Trở về trang chủ ↗</a></div> }
+</main>

@@ -1,0 +1,42 @@
+<main class="auth-page">
+  <div class="auth-art"><div class="eyebrow eyebrow-light"><span class="eyebrow-line"></span> SÂN NHÀ · 01</div><blockquote>“Trận đấu hay<br>bắt đầu từ một<br><em>cuộc hẹn.</em>”</blockquote><div class="auth-art-bottom"><span class="auth-circle">SN</span><span>CHỌN SÂN. CHỐT KÈO.<br>RA SÂN.</span><span class="auth-art-line"></span></div></div>
+  <section class="auth-form-wrap">
+    <a class="back-link" routerLink="/">← Quay về trang chủ</a>
+    <div class="auth-form-content"><div class="eyebrow"><span class="eyebrow-line"></span>{{ isRegister() ? 'TÀI KHOẢN MỚI' : 'CHÀO MỪNG TRỞ LẠI' }}</div>
+      @if (isRegister()) { <h1>Cùng ra sân nhé.</h1> } @else { <h1>Sẵn sàng<br>vào <em>cuộc chơi?</em></h1> }
+      <p class="auth-intro">{{ isRegister() ? (otpSent() ? 'Nhập mã OTP đã gửi đến số điện thoại để hoàn tất đăng ký.' : 'Tạo tài khoản và xác thực số điện thoại để giữ chỗ cho trận đấu tiếp theo.') : 'Đăng nhập để tiếp tục quản lý lịch sân của bạn.' }}</p>
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        @if (isRegister() && !otpSent()) {
+          <label class="field-label">Họ và tên<input formControlName="name" autocomplete="name" placeholder="Nguyễn Minh Anh"></label>
+          @if (form.controls.name.touched && form.controls.name.invalid) { <small class="field-error">Vui lòng nhập họ tên.</small> }
+        }
+        @if (!isRegister() || !otpSent()) {
+          <label class="field-label">Email<input formControlName="email" type="email" autocomplete="email" placeholder="ban&#64;email.com"></label>
+          @if (form.controls.email.touched && form.controls.email.invalid) { <small class="field-error">Vui lòng nhập email hợp lệ.</small> }
+        }
+        @if (isRegister() && !otpSent()) {
+          <label class="field-label">Số điện thoại <span>(bắt buộc để nhận mã OTP)</span><input formControlName="phone" type="tel" autocomplete="tel" placeholder="+84 9xx xxx xxx hoặc 09xx xxx xxx"></label>
+          @if (form.controls.phone.touched && form.controls.phone.invalid) { <small class="field-error">Vui lòng nhập số điện thoại hợp lệ.</small> }
+        }
+        @if (!isRegister() || !otpSent()) {
+          <label class="field-label">Mật khẩu<input formControlName="password" type="password" [attr.autocomplete]="isRegister() ? 'new-password' : 'current-password'" placeholder="Tối thiểu 8 ký tự"></label>
+          @if (form.controls.password.touched && form.controls.password.invalid) { <small class="field-error">Mật khẩu cần ít nhất 8 ký tự.</small> }
+        }
+        @if (isRegister() && otpSent()) {
+          <label class="field-label">Mã xác thực OTP<input [formControl]="otpForm.controls.code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Nhập mã 6 chữ số"></label>
+          @if (otpForm.controls.code.touched && otpForm.controls.code.invalid) { <small class="field-error">Mã OTP gồm 6 chữ số.</small> }
+          <small class="field-error">Mã có hiệu lực trong 5 phút. Bạn có thể gửi lại sau 1 phút.</small>
+        }
+        @if (notice()) { <div class="notice">{{ notice() }}</div> }
+        @if (error()) { <div class="notice notice-error">{{ error() }}</div> }
+        <button class="button button-dark auth-submit" type="submit" [disabled]="busy()">{{ busy() ? 'Đang xử lý...' : isRegister() ? (otpSent() ? 'Xác thực và tạo tài khoản' : 'Gửi mã OTP') : 'Đăng nhập' }} <span aria-hidden="true">↗</span></button>
+        @if (isRegister() && otpSent()) {
+          <button class="button button-quiet auth-submit" type="button" [disabled]="busy()" (click)="resendOtp()">Gửi lại mã OTP</button>
+          <button class="button button-quiet auth-submit" type="button" [disabled]="busy()" (click)="changeRegistrationDetails()">Thay đổi thông tin đăng ký</button>
+        }
+      </form>
+      <p class="auth-switch">{{ isRegister() ? 'Đã có tài khoản?' : 'Chưa có tài khoản?' }} <button type="button" (click)="toggleMode()">{{ isRegister() ? 'Đăng nhập' : 'Đăng ký ngay' }}</button></p>
+    </div>
+    <span class="auth-note">Mỗi trận đấu đẹp đều bắt đầu từ một lời hẹn.</span>
+  </section>
+</main>
